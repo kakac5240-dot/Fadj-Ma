@@ -1,39 +1,56 @@
-FROM php:8.3-apache
+FROM php:8.5-apache
 
-# 1. Installer les dépendances système indispensables
+# Installer les dépendances nécessaires
 RUN apt-get update && apt-get install -y \
     libsqlite3-dev \
     unzip \
     git \
-    && docker-php-ext-install pdo pdo_sqlite
+    && docker-php-ext-install pdo pdo_sqlite \
+    && rm -rf /var/lib/apt/lists/*
 
-# 2. Installer Composer dès le début
+# Installer Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# 3. Activer la réécriture Apache pour les routes Laravel
+# Activer Apache Rewrite
 RUN a2enmod rewrite
 
-# 4. Pointer le serveur vers le dossier public de Laravel
-ENV APACHE_DOCUMENT_ROOT /var/www/html/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
+# Configurer Laravel / Apache
+ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 
-# 5. Copier les fichiers du projet
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
+    /etc/apache2/sites-available/*.conf
+
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
+    /etc/apache2/apache2.conf
+
+# Copier le projet
 WORKDIR /var/www/html
 COPY . .
 
-# 6. Nettoyage complet des anciens fichiers de cache qui bloquent
-RUN rm -rf bootstrap/cache/*.php storage/framework/views/*.php
+# Installer les dépendances Laravel
+RUN composer install \
+    --no-dev \
+    --optimize-autoloader \
+    --no-scripts
 
-# 7. FORCER COMPOSER À IGNORER LES SCRIPTS DE CACHE LOCAUX AU BUILD
-RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs --no-scripts
+# Préparer les dossiers Laravel
+RUN mkdir -p \
+    storage/framework/cache \
+    storage/framework/sessions \
+    storage/framework/views \
+    bootstrap/cache \
+    database
 
-# 8. Créer les dossiers nécessaires et appliquer les permissions
-RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views database
+# Créer SQLite s'il n'existe pas
 RUN touch database/database.sqlite
-RUN chown -R www-data:www-data storage database
 
+# Permissions
+RUN chown -R www-data:www-data \
+    storage \
+    bootstrap/cache \
+    database
+
+# Apache
 EXPOSE 80
 
-# 9. Lancer les migrations automatiquement au démarrage du conteneur
-ENTRYPOINT ["/bin/sh", "-c", "php artisan migrate --force && php artisan db:seed --force && apache2-foreground"]
+CMD ["apache2-foreground"]
