@@ -21,8 +21,9 @@ WORKDIR /var/www/html
 COPY . .
 
 # Installer Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-RUN composer install --no-dev --optimize-autoloader
+COPY --from=composer:latest /usr/bin/composer /usr/bin/compos
+RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
+
 
 # Donner les permissions pour SQLite et les logs
 RUN chown -R www-data:www-data storage database
