@@ -1,36 +1,35 @@
 FROM php:8.3-apache
 
-# Installer les dépendances système nécessaires
+# 1. Installer les dépendances système indispensables
 RUN apt-get update && apt-get install -y \
     libsqlite3-dev \
     unzip \
     git \
     && docker-php-ext-install pdo pdo_sqlite
 
-# ÉTAPE CORRIGÉE : Installer Composer AU DÉBUT
+# 2. Installer Composer dès le début
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Activer le module de réécriture d'Apache pour Laravel
+# 3. Activer la réécriture Apache pour les routes Laravel
 RUN a2enmod rewrite
 
-# Configurer le dossier racine d'Apache vers /public de Laravel
+# 4. Pointer le serveur vers le dossier public de Laravel
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 
-# Définir le dossier de travail et copier les fichiers
-# Définir le dossier de travail et copier les fichiers
+# 5. Copier les fichiers du projet
 WORKDIR /var/www/html
 COPY . .
 
-# Nettoyer les fichiers de cache locaux s'ils existent
-RUN rm -rf bootstrap/cache/*.php
+# 6. Nettoyage complet des caches locaux susceptibles de bloquer
+RUN rm -rf bootstrap/cache/*.php storage/framework/views/*.php
 
-# Exécuter l'installation en mettant à jour l'autoloader
-RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
+# 7. CORRECTION RADICALE : Ajouter --no-scripts pour empêcher l'erreur de syntaxe au build
+RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs --no-scripts
 
-# Configurer les permissions pour SQLite et le stockage
-RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views
+# 8. Créer les dossiers de stockage et appliquer les permissions
+RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views database
 RUN chown -R www-data:www-data storage database
 
 EXPOSE 80
