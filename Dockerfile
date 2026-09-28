@@ -1,19 +1,19 @@
 FROM php:8.3-apache
 
-# 1. Installer les dépendances et extensions PHP nécessaires
+# 1. Installer les dépendances système indispensables
 RUN apt-get update && apt-get install -y \
     libsqlite3-dev \
     unzip \
     git \
     && docker-php-ext-install pdo pdo_sqlite
 
-# 2. Installer Composer
+# 2. Installer Composer dès le début
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# 3. Activer la réécriture Apache
+# 3. Activer la réécriture Apache pour les routes Laravel
 RUN a2enmod rewrite
 
-# 4. Configurer le dossier racine d'Apache
+# 4. Pointer le serveur vers le dossier public de Laravel
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
@@ -22,20 +22,18 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.
 WORKDIR /var/www/html
 COPY . .
 
-# 6. Nettoyage et création des dossiers obligatoires
+# 6. Nettoyage complet des anciens fichiers de cache qui bloquent
 RUN rm -rf bootstrap/cache/*.php storage/framework/views/*.php
-RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views database
 
-# 7. Créer un fichier de base de données vide pour SQLite si absent
-RUN touch database/database.sqlite
-
-# 8. Installer les dépendances sans exécuter les scripts locaux problématiques
+# 7. FORCER COMPOSER À IGNORER LES SCRIPTS DE CACHE LOCAUX AU BUILD
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs --no-scripts
 
-# 9. Appliquer les permissions Apache
+# 8. Créer les dossiers nécessaires et appliquer les permissions
+RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views database
+RUN touch database/database.sqlite
 RUN chown -R www-data:www-data storage database
 
 EXPOSE 80
 
-# 10. Script de démarrage sécurisé : migrations puis lancement du serveur
+# 9. Lancer les migrations automatiquement au démarrage du conteneur
 ENTRYPOINT ["/bin/sh", "-c", "php artisan migrate --force && php artisan db:seed --force && apache2-foreground"]
