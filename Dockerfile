@@ -19,13 +19,18 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-av
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 
 # Définir le dossier de travail et copier les fichiers
+# Définir le dossier de travail et copier les fichiers
 WORKDIR /var/www/html
 COPY . .
 
-# Exécuter l'installation des dépendances PHP sans bloquer
+# Nettoyer les fichiers de cache locaux s'ils existent
+RUN rm -rf bootstrap/cache/*.php
+
+# Exécuter l'installation en mettant à jour l'autoloader
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
 # Configurer les permissions pour SQLite et le stockage
+RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views
 RUN chown -R www-data:www-data storage database
 
 EXPOSE 80
