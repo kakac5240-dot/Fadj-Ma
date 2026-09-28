@@ -6,7 +6,16 @@ use Illuminate\Database\Eloquent\Model;
 
 class Medicine extends Model
 {
-    protected $fillable = ['nom', 'code_medicament', 'stock', 'seuil_alerte', 'medicine_group_id', 'photo_url', 'description', 'composition', 'fabricant', 'type_consommation', 'date_expiration'];
+    protected $fillable = [
+        
+        'photo_url',
+        'photo',
+        'description',
+        'composition',
+        'fabricant',
+        'type_consommation',
+        'date_expiration',
+    ];
 
     public function group()
     {
