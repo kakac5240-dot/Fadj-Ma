@@ -32,4 +32,8 @@ RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs --no-
 RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views database
 RUN chown -R www-data:www-data storage database
 
+
 EXPOSE 80
+
+# Exécuter les migrations et démarrer le serveur Apache
+CMD php artisan migrate --force && php artisan db:seed --force && apache2-foreground
