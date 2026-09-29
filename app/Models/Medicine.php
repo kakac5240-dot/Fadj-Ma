@@ -9,12 +9,12 @@ class Medicine extends Model
     protected $fillable = [
         
         'photo_url',
-        'photo',
         'description',
         'composition',
         'fabricant',
         'type_consommation',
         'date_expiration',
+        'dosage_posologie',
     ];
 
     public function group()
