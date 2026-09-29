@@ -51,6 +51,5 @@ RUN chown -R www-data:www-data \
     database
 
 # Apache
-EXPOSE 80
-
-CMD ["sh", "-c", "php artisan migrate --force && php artisan db:seed --class=DemoMedicinesSeeder --force && apache2-foreground"]
+EXPOSE
+CMD ["sh", "-c", "php artisan migrate --force && php artisan db:seed --force && apache2-foreground"]
