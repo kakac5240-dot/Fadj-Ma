@@ -13,13 +13,13 @@ class AccountCreatedMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public function __construct(public User $user)
+    public function __construct(public User $user, public string $password)
     {
     }
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: 'Bienvenue sur Fadj-Ma - Compte cree');
+        return new Envelope(subject: 'Bienvenue sur Fadj-Ma - Votre compte');
     }
 
     public function content(): Content

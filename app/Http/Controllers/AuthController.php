@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -17,23 +18,27 @@ class AuthController extends Controller
         $data = $request->validate([
             'name' => 'required|string',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:6',
-            'role' => 'nullable|string',
+            'genre' => 'nullable|string',
+            'date_naissance' => 'nullable|string',
         ]);
+
+        $randomPassword = Str::random(10);
 
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
-            'password' => Hash::make($data['password']),
+            'password' => Hash::make($randomPassword),
+            'genre' => $data['genre'] ?? null,
+            'date_naissance' => $data['date_naissance'] ?? null,
         ]);
 
         try {
-            Mail::to($user->email)->send(new AccountCreatedMail($user));
+            Mail::to($user->email)->send(new AccountCreatedMail($user, $randomPassword));
         } catch (\Throwable $e) {
             Log::error('Envoi email echoue: ' . $e->getMessage());
         }
 
-        return response()->json($user, 201);
+        return response()->json(['message' => 'Compte cree, identifiants envoyes par email'], 201);
     }
 
     public function login(Request $request)
