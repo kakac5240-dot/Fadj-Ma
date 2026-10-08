@@ -22,8 +22,8 @@ class MedicineController extends Controller
         $data = $request->validate([
             'nom' => 'required|string',
             'code_medicament' => 'required|string',
-            'stock' => 'required|integer',
-            'seuil_alerte' => 'required|integer',
+            'stock' => 'required|integer|min:0',
+            'seuil_alerte' => 'required|integer|min:0',
             'medicine_group_id' => 'required|exists:medicine_groups,id',
             'photo_url' => 'nullable|string',
             'description' => 'nullable|string',
@@ -37,7 +37,21 @@ class MedicineController extends Controller
     public function update(Request $request, $id)
     {
         $medicine = Medicine::findOrFail($id);
-        $medicine->update($request->all());
+
+        $data = $request->validate([
+            'nom' => 'required|string',
+            'code_medicament' => 'required|string',
+            'stock' => 'required|integer|min:0',
+            'seuil_alerte' => 'required|integer|min:0',
+            'medicine_group_id' => 'nullable|exists:medicine_groups,id',
+            'photo_url' => 'nullable|string',
+            'description' => 'nullable|string',
+        ]);
+
+        $medicine->update($data);
+
+        // Recharge les nouvelles données depuis la base
+        $medicine->refresh();
 
         return response()->json($medicine);
     }
