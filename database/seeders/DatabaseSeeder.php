@@ -24,5 +24,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             DemoMedicinesSeeder::class,
         ]);
+        \App\Models\User::where('email', 'admin@fadjma.com')->whereNull('email_verified_at')->update(['email_verified_at' => now()]);
     }
+
 }

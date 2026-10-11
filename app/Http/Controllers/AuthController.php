@@ -194,9 +194,10 @@ class AuthController extends Controller
             ], 403);
         }
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+                $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
+            'message' => 'Compte valide, mot de passe temporaire envoye par email',
             'token' => $token,
             'user' => $user,
         ]);

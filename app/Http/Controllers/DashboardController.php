@@ -27,6 +27,11 @@ class DashboardController extends Controller
             'totalClients' => Client::count(),
             'totalFournisseurs' => Supplier::count(),
             'facturesGenerees' => $invoicesCount,
+            'medicamentsDisponibles' => \App\Models\Medicine::where('stock', '>', 0)->count(),
+'totalMedicaments'       => \App\Models\Medicine::count(),
+'groupesMedicaments'     => \App\Models\MedicineGroup::count(),
+'penurieMedicaments'     => \App\Models\Medicine::whereColumn('stock', '<=', 'seuil_alerte')->count(),
+'statutInventaire'       => \App\Models\Medicine::whereColumn('stock', '<=', 'seuil_alerte')->count() > 0 ? 'Attention' : 'Bien',
         ]);
     }
 }
