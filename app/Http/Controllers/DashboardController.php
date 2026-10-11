@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Medicine;
+use App\Models\MedicineGroup;
 use App\Models\Sale;
 use App\Models\Client;
 use App\Models\Supplier;
@@ -12,6 +13,7 @@ class DashboardController extends Controller
     public function index()
     {
         $totalMedicines = Medicine::count();
+        $availableCount = Medicine::where('stock', '>', 0)->count();
         $lowStockCount = Medicine::whereColumn('stock', '<=', 'seuil_alerte')->count();
 
         $startOfMonth = now()->startOfMonth();
@@ -22,16 +24,13 @@ class DashboardController extends Controller
         return response()->json([
             'statutInventaire' => $lowStockCount === 0 ? 'Bien' : 'Attention',
             'revenuMois' => $revenue,
-            'medicamentsDisponibles' => $totalMedicines,
+            'medicamentsDisponibles' => $availableCount,
+            'totalMedicaments' => $totalMedicines,
+            'groupesMedicaments' => MedicineGroup::count(),
             'penurieMedicaments' => $lowStockCount,
             'totalClients' => Client::count(),
             'totalFournisseurs' => Supplier::count(),
             'facturesGenerees' => $invoicesCount,
-            'medicamentsDisponibles' => \App\Models\Medicine::where('stock', '>', 0)->count(),
-'totalMedicaments'       => \App\Models\Medicine::count(),
-'groupesMedicaments'     => \App\Models\MedicineGroup::count(),
-'penurieMedicaments'     => \App\Models\Medicine::whereColumn('stock', '<=', 'seuil_alerte')->count(),
-'statutInventaire'       => \App\Models\Medicine::whereColumn('stock', '<=', 'seuil_alerte')->count() > 0 ? 'Attention' : 'Bien',
         ]);
     }
 }
